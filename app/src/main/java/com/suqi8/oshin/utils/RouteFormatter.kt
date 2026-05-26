@@ -8,6 +8,7 @@ import com.suqi8.oshin.models.PlainText
 import com.suqi8.oshin.models.StringResource
 import com.suqi8.oshin.models.Title
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -16,6 +17,11 @@ class RouteFormatter @Inject constructor(
     @ApplicationContext private val context: Context,
     private val appInfoProvider: AppInfoProvider
 ) {
+    private val routeToPackageName by lazy {
+        FeatureRegistry.moduleEntries.associate { it.routeId to it.packageName }
+    }
+
+    private val breadcrumbCache = ConcurrentHashMap<String, String>()
 
     /**
      * 将内部路由字符串 (e.g., "systemui\\controlCenter")
@@ -25,6 +31,8 @@ class RouteFormatter @Inject constructor(
      * @return 格式化后的面包屑字符串
      */
     suspend fun formatRouteAsBreadcrumb(route: String): String {
+        breadcrumbCache[route]?.let { return it }
+
         val routeParts = route.split('\\')
         val resolvedParts = mutableListOf<String>()
         var currentRouteKey = ""
@@ -34,10 +42,8 @@ class RouteFormatter @Inject constructor(
                 // --- 1. 解析第一部分 (根模块/应用) ---
                 currentRouteKey = part
 
-                // 从注册表找到对应的包名
-                val pkgName = FeatureRegistry.moduleEntries
-                    .find { it.routeId == part }
-                    ?.packageName
+                // 从缓存好的映射中查找对应的包名
+                val pkgName = routeToPackageName[part]
 
                 if (pkgName != null) {
                     // 使用 AppInfoProvider 异步解析应用名
@@ -65,7 +71,9 @@ class RouteFormatter @Inject constructor(
         }
 
         // --- 3. 组合所有部分 ---
-        return resolvedParts.joinToString(" › ")
+        return resolvedParts.joinToString(" › ").also {
+            breadcrumbCache.putIfAbsent(route, it)
+        }
     }
 
     /**
