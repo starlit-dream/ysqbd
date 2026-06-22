@@ -19,6 +19,7 @@ dependencyResolutionManagement {
         mavenCentral()
         google()
         maven("https://jitpack.io")
+        maven("https://maven.aliyun.com/repository/public") // Xposed API mirror
         maven("https://api.xposed.info/repository/") // Xposed 框架 API
 
     }
