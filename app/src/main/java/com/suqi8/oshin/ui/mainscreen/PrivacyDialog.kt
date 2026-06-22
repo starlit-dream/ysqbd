@@ -16,9 +16,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.highcapable.yukihookapi.hook.factory.prefs
 import com.suqi8.oshin.R
-import com.suqi8.oshin.utils.executeCommand
-import com.umeng.analytics.MobclickAgent
-import com.umeng.commonsdk.UMConfigure
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
@@ -36,19 +33,7 @@ fun PrivacyDialog() {
 
     LaunchedEffect(isPrivacyEnabled.value) {
         if (!isPrivacyEnabled.value) {
-            UMConfigure.init(context, "67c7dea68f232a05f127781e", "android", UMConfigure.DEVICE_TYPE_PHONE, "")
-            withContext(Dispatchers.IO) {
-                val lsposedVersionName = executeCommand("awk -F= '/version=/ {print $2}' /data/adb/modules/zygisk_lsposed/module.prop")
-                lspVersion.value = lsposedVersionName
-                val savedLspVersion = context.prefs("settings").getString("privacy_lspvername", "")
-                if (lsposedVersionName.isNotEmpty() && lsposedVersionName != savedLspVersion) {
-                    val eventData = mapOf("version_name" to lsposedVersionName)
-                    MobclickAgent.onEvent(context, "lsposed_usage", eventData)
-                    context.prefs("settings").edit {
-                        putString("privacy_lspvername", lsposedVersionName)
-                    }
-                }
-            }
+            // Privacy accepted — no telemetry to init
         }
     }
 

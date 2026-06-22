@@ -32,12 +32,6 @@
     *** inflate(android.view.LayoutInflater);
 }
 -keep class com.android.tools.desugar.runtime.** { *; }
--keep class com.umeng.** {*;}
-
--keep class org.repackage.** {*;}
-
--keep class com.uyumao.** { *; }
-
 -keepclassmembers class * {
    public <init> (org.json.JSONObject);
 }
@@ -46,10 +40,7 @@
     public static **[] values();
     public static ** valueOf(java.lang.String);
 }
--dontwarn com.umeng.ccg.ActionInfo
 -dontwarn java.lang.reflect.AnnotatedType
--dontwarn com.umeng.**
--dontwarn org.repackage.**
 -keep class com.suqi8.oshin.ui.activity.func.StatusBarLayout.** { *; }
 -keepattributes Signature, InnerClasses, EnclosingMethod
 -dontusemixedcaseclassnames

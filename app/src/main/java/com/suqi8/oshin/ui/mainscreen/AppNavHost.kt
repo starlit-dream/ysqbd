@@ -29,7 +29,6 @@ import top.yukonga.miuix.kmp.basic.rememberTopAppBarState
 @Composable
 fun AppNavHost() {
     val navController = rememberNavController()
-    VerifyDialog()
     PrivacyDialog()
 
     Column {

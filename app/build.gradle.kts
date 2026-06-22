@@ -240,12 +240,6 @@ dependencies {
     runtimeOnly(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
 
-    // ------------------- Umeng (友盟) SDK -------------------
-    implementation(libs.umeng.common)
-    implementation(libs.umeng.asms)
-    implementation(libs.umeng.uyumao)
-    implementation(libs.union)
-
     // ------------------- 测试相关库 -------------------
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.junit)

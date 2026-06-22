@@ -77,7 +77,7 @@ import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.highcapable.yukihookapi.YukiHookAPI
 import com.suqi8.oshin.R
-import com.suqi8.oshin.ui.mainscreen.CarouselContent
+import com.suqi8.oshin.ui.mainscreen.CarouselItem
 import com.suqi8.oshin.ui.mainscreen.DeviceInfo
 import com.suqi8.oshin.ui.mainscreen.FridaStatus
 import com.suqi8.oshin.ui.mainscreen.HighlightFeature
@@ -86,9 +86,6 @@ import com.suqi8.oshin.ui.mainscreen.ModuleStatus
 import com.suqi8.oshin.ui.mainscreen.RootStatus
 import com.suqi8.oshin.ui.mainscreen.Status
 import com.suqi8.oshin.ui.mainscreen.lspVersion
-import com.umeng.union.UMNativeAD
-import com.umeng.union.widget.UMNativeLayout
-import com.umeng.union.widget.UMVideoView
 import kotlinx.coroutines.delay
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.ScrollBehavior
@@ -130,7 +127,7 @@ fun MainHome(
             }
             // 轮播图
             item {
-                uiState.combinedCarouselItems.let {
+                uiState.carouselItems?.let {
                     FeaturedCollectionsSection(items = it)
                 }
             }
@@ -203,7 +200,7 @@ fun ModernSectionTitle(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun FeaturedCollectionsSection(items: List<CarouselContent>) {
+fun FeaturedCollectionsSection(items: List<CarouselItem>) {
     // 如果列表为空，直接不显示这个区域，避免不必要的计算
     if (items.isEmpty()) return
 
@@ -245,26 +242,7 @@ fun FeaturedCollectionsSection(items: List<CarouselContent>) {
             val scale = lerp(1f, 0.88f, abs(pageOffset).coerceAtMost(1f))
             val alpha = lerp(1f, 0.6f, abs(pageOffset).coerceAtMost(1f))
 
-            // 根据内容类型动态渲染UI
-            when (val content = items[page]) {
-                is CarouselContent.Ad -> {
-                    // 渲染广告卡片
-                    UmengNativeBannerAd(
-                        modifier = Modifier
-                            .graphicsLayer {
-                                scaleX = scale
-                                scaleY = scale
-                                this.alpha = alpha
-                            }
-                            .fillMaxWidth()
-                            .aspectRatio(16f / 9f)
-                            .clip(RoundedCornerShape(24.dp)),
-                        nativeAd = content.ad
-                    )
-                }
-                is CarouselContent.Promo -> {
-                    // 渲染原始的推广卡片
-                    val item = content.item
+            val item = items[page]
                     Box(
                         modifier = Modifier
                             .graphicsLayer {
@@ -361,8 +339,6 @@ fun FeaturedCollectionsSection(items: List<CarouselContent>) {
                             }
                         }
                     }
-                }
-            }
         }
 
         Spacer(Modifier.height(16.dp))
@@ -389,133 +365,6 @@ fun FeaturedCollectionsSection(items: List<CarouselContent>) {
                 )
             }
         }
-    }
-}
-
-/**
- * 用于展示友盟原生Banner广告（包括视频）的 Composable。
- * 包含了生命周期管理，以正确处理视频播放。
- *
- * @param modifier Modifier for this composable.
- * @param nativeAd 从友盟SDK获取的广告对象。
- */
-@Composable
-fun UmengNativeBannerAd(
-    modifier: Modifier = Modifier,
-    nativeAd: UMNativeAD
-) {
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner, nativeAd) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (!nativeAd.isVideo) return@LifecycleEventObserver
-            when (event) {
-                Lifecycle.Event.ON_RESUME -> nativeAd.videoPlayer?.start()
-                Lifecycle.Event.ON_PAUSE -> nativeAd.videoPlayer?.pause()
-                else -> {}
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-            nativeAd.destroy()
-        }
-    }
-
-    val context = LocalContext.current
-    val eventBinderLayout = remember { UMNativeLayout(context) }
-
-    Box(modifier = modifier) {
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(
-                            Color(0xFF6366F1),
-                            Color(0xFF8B5CF6),
-                            Color(0xFFEC4899)
-                        )
-                    )
-                )
-        )
-
-        if (nativeAd.isVideo) {
-            AndroidView(
-                factory = { ctx -> UMVideoView(ctx) },
-                modifier = Modifier.fillMaxSize(),
-                update = { videoView ->
-                    nativeAd.bindVideoView(videoView)
-                    nativeAd.setVideoAutoplay(true)
-                }
-            )
-        } else {
-            AsyncImage(
-                model = nativeAd.imageUrl,
-                contentDescription = nativeAd.title,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f))
-                    )
-                )
-        )
-
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(20.dp)
-        ) {
-            Text(
-                text = nativeAd.title ?: "",
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = nativeAd.content ?: "",
-                color = Color.White.copy(alpha = 0.9f),
-                fontSize = 14.sp,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-        }
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp)
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(Brush.radialGradient(colors = listOf(Color.White.copy(alpha = 0.9f), Color.White.copy(alpha = 0.7f))))
-                .border(width = 1.5.dp, color = Color.White.copy(alpha = 0.5f), shape = CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = "广告详情",
-                tint = MiuixTheme.colorScheme.primary,
-                modifier = Modifier.size(16.dp)
-            )
-        }
-
-        AndroidView(
-            factory = { eventBinderLayout },
-            modifier = Modifier.fillMaxSize(),
-            update = { umNativeLayout ->
-                nativeAd.bindView(umNativeLayout.context, umNativeLayout, listOf(umNativeLayout))
-            }
-        )
     }
 }
 
