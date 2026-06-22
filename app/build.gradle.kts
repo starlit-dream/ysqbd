@@ -94,7 +94,6 @@ android {
         }
         // 创建一个通用的 "release" 签名配置，用于本地构建或在 CI/CD 环境之外的场景。
         create("release") {
-            enableV4Signing = true
         }
     }
 
@@ -104,7 +103,9 @@ android {
             val keystoreFile = System.getenv("KEYSTORE_PATH")
             val isCiBuild = keystoreFile != null
             // 根据是否存在 CI 环境变量来决定使用哪个签名配置。
-            signingConfig = signingConfigs.getByName(if (isCiBuild) "ci" else "release")
+            if (isCiBuild) {
+                signingConfig = signingConfigs.getByName("ci")
+            }
 
             // 通过 `buildConfigField` 在 `BuildConfig.java` 中生成一个常量。
             val buildTag = if (isCiBuild) "CI Build" else "Release"
